@@ -1,15 +1,17 @@
 package founder_spring.project.dto;
 
+import founder_spring.category.dto.CategorySummaryResponse;
 import founder_spring.project.entity.ProjectActivityStatus;
 import founder_spring.project.entity.ProjectScope;
 import founder_spring.project.entity.ProjectStage;
-import jakarta.validation.constraints.Size;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-public class UpdateProjectRequest {
+public class ProjectResponse {
 
-    @Size(max = 100, message = "Project name must not exceed 100 characters")
+    private String id;
+
     private String name;
 
     private ProjectScope scope;
@@ -20,7 +22,20 @@ public class UpdateProjectRequest {
 
     private String detailLocation;
 
-    private List<String> categoryIds;
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    private List<CategorySummaryResponse> categories;
+
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
@@ -62,5 +77,27 @@ public class UpdateProjectRequest {
         this.detailLocation = detailLocation;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public List<CategorySummaryResponse> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<CategorySummaryResponse> categories) {
+        this.categories = categories;
+    }
 }

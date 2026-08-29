@@ -1,8 +1,7 @@
-package founder_spring.project.entity;
+package founder_spring.category.entity;
 
 import founder_spring.project_category.entity.ProjectCategory;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,13 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "projects")
+@Table(name = "categories")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Project {
+public class Category {
 
     @Id
+    @Column(length = 25)
     private String id;
 
     @Column(nullable = false, length = 100)
@@ -26,18 +26,11 @@ public class Project {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProjectScope scope;
+    private CategoryType type;
 
-    @Column(length = 500)
-    private String detailLocation;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ProjectStage stage;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ProjectActivityStatus activityStatus;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Category parent;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -45,17 +38,12 @@ public class Project {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(
-            mappedBy = "project",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @OneToMany(mappedBy = "category")
     private List<ProjectCategory> projectCategories = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-
         createdAt = now;
         updatedAt = now;
     }

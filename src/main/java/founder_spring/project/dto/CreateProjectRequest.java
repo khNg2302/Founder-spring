@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 public class CreateProjectRequest {
 
     @NotBlank(message = "Project name is required")
@@ -21,6 +23,11 @@ public class CreateProjectRequest {
 
     @NotNull(message = "Project activity status is required")
     private ProjectActivityStatus activityStatus;
+
+    private List<String> categoryIds;
+
+    @Size(max = 500, message = "Detail location must not exceed 500 characters")
+    private String detailLocation;
 
     public String getName() {
         return name;
@@ -52,5 +59,22 @@ public class CreateProjectRequest {
 
     public void setActivityStatus(ProjectActivityStatus activityStatus) {
         this.activityStatus = activityStatus;
+    }
+
+
+    public List<String> getCategoryIds() {
+        return categoryIds;
+    }
+
+    public void setCategoryIds(List<String> categoryIds) {
+        this.categoryIds = categoryIds;
+    }
+
+    public String getDetailLocation() {
+        return detailLocation;
+    }
+
+    public void setDetailLocation(String detailLocation) {
+        this.detailLocation = detailLocation;
     }
 }

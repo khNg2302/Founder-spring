@@ -1,5 +1,6 @@
 package founder_spring.project.controller;
 
+import founder_spring.project.dto.ProjectResponse;
 import founder_spring.project.dto.UpdateProjectRequest;
 import founder_spring.project.entity.Project;
 import founder_spring.project.service.ProjectService;
@@ -9,7 +10,6 @@ import founder_spring.project.dto.CreateProjectRequest;
 import jakarta.validation.Valid;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/projects")
@@ -21,18 +21,8 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
-    @GetMapping
-    public List<Project> findAll() {
-        return projectService.findAll();
-    }
-
-    @GetMapping("/{id}")
-    public Project findById(@PathVariable String id) {
-        return projectService.findById(id);
-    }
-
     @PostMapping
-    public Project create(@Valid @RequestBody CreateProjectRequest request) {
+    public ProjectResponse create(@Valid @RequestBody CreateProjectRequest request) {
         return projectService.create(request);
     }
 
@@ -47,5 +37,15 @@ public class ProjectController {
             @Valid @RequestBody UpdateProjectRequest request
     ) {
         return projectService.update(id, request);
+    }
+
+    @GetMapping
+    public List<ProjectResponse> getAll() {
+        return projectService.getAll();
+    }
+
+    @GetMapping("/{id}")
+    public ProjectResponse getById(@PathVariable String id) {
+        return projectService.getById(id);
     }
 }
