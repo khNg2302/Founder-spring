@@ -9,6 +9,9 @@ import founder_spring.project.dto.CreateProjectRequest;
 import founder_spring.project.dto.ProjectResponse;
 import founder_spring.project.dto.UpdateProjectRequest;
 import founder_spring.project.entity.Project;
+import founder_spring.project.entity.ProjectActivityStatus;
+import founder_spring.project.entity.ProjectScope;
+import founder_spring.project.entity.ProjectStage;
 import founder_spring.project.exception.ProjectNotFoundException;
 import founder_spring.project.repository.ProjectRepository;
 import founder_spring.project_category.entity.ProjectCategory;
@@ -162,10 +165,8 @@ public class ProjectService {
             }
         }
 
-        // 5. Bắt INSERT hoàn tất
         projectCategoryRepository.flush();
 
-        // 6. Load lại Project + categories
         Project updatedProject = projectRepository
                 .findByIdWithCategories(id)
                 .orElseThrow(() ->
@@ -187,10 +188,20 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProjectResponse> getAll(Pageable pageable) {
+    public Page<ProjectResponse> getAll(
+            Pageable pageable,
+            ProjectScope scope,
+            ProjectStage stage,
+            ProjectActivityStatus activityStatus
+    ) {
 
         Page<Project> projectPage =
-                projectRepository.findAllProjects(pageable);
+                projectRepository.findAllProjects(
+                        scope,
+                        stage,
+                        activityStatus,
+                        pageable
+                );
 
         List<String> projectIds =
                 projectPage.getContent()
@@ -203,9 +214,7 @@ public class ProjectService {
         }
 
         List<Project> projectsWithCategories =
-                projectRepository.findAllWithCategoriesByIds(
-                        projectIds
-                );
+                projectRepository.findAllWithCategoriesByIds(projectIds);
 
         Map<String, Project> projectMap =
                 projectsWithCategories.stream()
@@ -215,9 +224,7 @@ public class ProjectService {
                         ));
 
         return projectPage.map(project ->
-                toResponse(
-                        projectMap.get(project.getId())
-                )
+                toResponse(projectMap.get(project.getId()))
         );
     }
 

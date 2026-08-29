@@ -1,6 +1,9 @@
 package founder_spring.project.repository;
 
 import founder_spring.project.entity.Project;
+import founder_spring.project.entity.ProjectActivityStatus;
+import founder_spring.project.entity.ProjectScope;
+import founder_spring.project.entity.ProjectStage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,13 +20,24 @@ public interface ProjectRepository
             value = """
             SELECT p
             FROM Project p
+            WHERE (:scope IS NULL OR p.scope = :scope)
+              AND (:stage IS NULL OR p.stage = :stage)
+              AND (:activityStatus IS NULL OR p.activityStatus = :activityStatus)
             """,
             countQuery = """
             SELECT COUNT(p)
             FROM Project p
+            WHERE (:scope IS NULL OR p.scope = :scope)
+              AND (:stage IS NULL OR p.stage = :stage)
+              AND (:activityStatus IS NULL OR p.activityStatus = :activityStatus)
             """
     )
-    Page<Project> findAllProjects(Pageable pageable);
+    Page<Project> findAllProjects(
+            @Param("scope") ProjectScope scope,
+            @Param("stage") ProjectStage stage,
+            @Param("activityStatus") ProjectActivityStatus activityStatus,
+            Pageable pageable
+    );
 
     @Query("""
         SELECT DISTINCT p

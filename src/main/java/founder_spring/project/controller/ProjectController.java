@@ -2,7 +2,9 @@ package founder_spring.project.controller;
 
 import founder_spring.project.dto.ProjectResponse;
 import founder_spring.project.dto.UpdateProjectRequest;
-import founder_spring.project.entity.Project;
+import founder_spring.project.entity.ProjectActivityStatus;
+import founder_spring.project.entity.ProjectScope;
+import founder_spring.project.entity.ProjectStage;
 import founder_spring.project.service.ProjectService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,8 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import founder_spring.project.dto.CreateProjectRequest;
 import jakarta.validation.Valid;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/projects")
@@ -45,9 +45,23 @@ public class ProjectController {
 
     @GetMapping
     public Page<ProjectResponse> getAll(
-            Pageable pageable
+            Pageable pageable,
+
+            @RequestParam(required = false)
+            ProjectScope scope,
+
+            @RequestParam(required = false)
+            ProjectStage stage,
+
+            @RequestParam(required = false)
+            ProjectActivityStatus activityStatus
     ) {
-        return projectService.getAll(pageable);
+        return projectService.getAll(
+                pageable,
+                scope,
+                stage,
+                activityStatus
+        );
     }
 
     @GetMapping("/{id}")
