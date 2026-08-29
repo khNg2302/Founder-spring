@@ -192,7 +192,8 @@ public class ProjectService {
             Pageable pageable,
             ProjectScope scope,
             ProjectStage stage,
-            ProjectActivityStatus activityStatus
+            ProjectActivityStatus activityStatus,
+            String categoryId
     ) {
 
         Page<Project> projectPage =
@@ -200,6 +201,7 @@ public class ProjectService {
                         scope,
                         stage,
                         activityStatus,
+                        categoryId,
                         pageable
                 );
 

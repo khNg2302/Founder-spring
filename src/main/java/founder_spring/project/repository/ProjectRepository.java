@@ -18,24 +18,43 @@ public interface ProjectRepository
 
     @Query(
             value = """
-            SELECT p
-            FROM Project p
-            WHERE (:scope IS NULL OR p.scope = :scope)
-              AND (:stage IS NULL OR p.stage = :stage)
-              AND (:activityStatus IS NULL OR p.activityStatus = :activityStatus)
-            """,
+        SELECT p
+        FROM Project p
+        WHERE (:scope IS NULL OR p.scope = :scope)
+          AND (:stage IS NULL OR p.stage = :stage)
+          AND (:activityStatus IS NULL OR p.activityStatus = :activityStatus)
+          AND (
+              :categoryId IS NULL
+              OR EXISTS (
+                  SELECT 1
+                  FROM ProjectCategory pc
+                  WHERE pc.project = p
+                    AND pc.category.id = :categoryId
+              )
+          )
+        """,
             countQuery = """
-            SELECT COUNT(p)
-            FROM Project p
-            WHERE (:scope IS NULL OR p.scope = :scope)
-              AND (:stage IS NULL OR p.stage = :stage)
-              AND (:activityStatus IS NULL OR p.activityStatus = :activityStatus)
-            """
+        SELECT COUNT(p)
+        FROM Project p
+        WHERE (:scope IS NULL OR p.scope = :scope)
+          AND (:stage IS NULL OR p.stage = :stage)
+          AND (:activityStatus IS NULL OR p.activityStatus = :activityStatus)
+          AND (
+              :categoryId IS NULL
+              OR EXISTS (
+                  SELECT 1
+                  FROM ProjectCategory pc
+                  WHERE pc.project = p
+                    AND pc.category.id = :categoryId
+              )
+          )
+        """
     )
     Page<Project> findAllProjects(
             @Param("scope") ProjectScope scope,
             @Param("stage") ProjectStage stage,
             @Param("activityStatus") ProjectActivityStatus activityStatus,
+            @Param("categoryId") String categoryId,
             Pageable pageable
     );
 

@@ -54,13 +54,17 @@ public class ProjectController {
             ProjectStage stage,
 
             @RequestParam(required = false)
-            ProjectActivityStatus activityStatus
+            ProjectActivityStatus activityStatus,
+
+            @RequestParam(required = false)
+            String categoryId
     ) {
         return projectService.getAll(
                 pageable,
                 scope,
                 stage,
-                activityStatus
+                activityStatus,
+                categoryId
         );
     }
 
