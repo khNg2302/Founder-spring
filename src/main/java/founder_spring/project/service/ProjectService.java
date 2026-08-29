@@ -1,6 +1,5 @@
 package founder_spring.project.service;
 
-
 import founder_spring.category.dto.CategorySummaryResponse;
 import founder_spring.category.entity.Category;
 import founder_spring.category.exception.CategoryNotFoundException;
@@ -14,8 +13,8 @@ import founder_spring.project.exception.ProjectNotFoundException;
 import founder_spring.project.repository.ProjectRepository;
 import founder_spring.project_category.entity.ProjectCategory;
 import founder_spring.project_category.repository.ProjectCategoryRepository;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,17 +23,19 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final CuidGenerator cuidGenerator;
-    private final ProjectCategoryRepository projectCategoryRepository;
     private final CategoryRepository categoryRepository;
+    private final ProjectCategoryRepository projectCategoryRepository;
 
     public ProjectService(
             ProjectRepository projectRepository,
-            CuidGenerator cuidGenerator, ProjectCategoryRepository projectCategoryRepository,CategoryRepository categoryRepository
+            CuidGenerator cuidGenerator,
+            CategoryRepository categoryRepository,
+            ProjectCategoryRepository projectCategoryRepository
     ) {
         this.projectRepository = projectRepository;
         this.cuidGenerator = cuidGenerator;
-        this.projectCategoryRepository = projectCategoryRepository;
         this.categoryRepository = categoryRepository;
+        this.projectCategoryRepository = projectCategoryRepository;
     }
 
     private ProjectResponse toResponse(Project project) {
@@ -67,11 +68,12 @@ public class ProjectService {
         return response;
     }
 
-
-
     public Project findById(String id) {
+
         return projectRepository.findById(id)
-                .orElseThrow(() -> new ProjectNotFoundException(id));
+                .orElseThrow(() ->
+                        new ProjectNotFoundException(id)
+                );
     }
 
     @Transactional
@@ -101,55 +103,89 @@ public class ProjectService {
                 projectCategory.setProject(project);
                 projectCategory.setCategory(category);
 
-                project.getProjectCategories().add(projectCategory);
+                project.getProjectCategories()
+                        .add(projectCategory);
             }
         }
 
-        Project savedProject = projectRepository.save(project);
+        Project savedProject =
+                projectRepository.save(project);
 
         return toResponse(savedProject);
     }
 
+    @Transactional
+    public ProjectResponse update(
+            String id,
+            UpdateProjectRequest request
+    ) {
+
+        Project project = projectRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new ProjectNotFoundException(id)
+                );
+
+        project.setName(request.getName());
+        project.setScope(request.getScope());
+        project.setDetailLocation(request.getDetailLocation());
+        project.setStage(request.getStage());
+        project.setActivityStatus(request.getActivityStatus());
+
+        projectRepository.save(project);
+
+        projectCategoryRepository.deleteAllByProjectId(id);
+
+        projectCategoryRepository.flush();
+
+        if (request.getCategoryIds() != null) {
+
+            for (String categoryId : request.getCategoryIds()) {
+
+                Category category = categoryRepository
+                        .findById(categoryId)
+                        .orElseThrow(() ->
+                                new CategoryNotFoundException(categoryId)
+                        );
+
+                ProjectCategory projectCategory =
+                        new ProjectCategory();
+
+                projectCategory.setProject(project);
+                projectCategory.setCategory(category);
+
+                projectCategoryRepository.save(projectCategory);
+            }
+        }
+
+        // 5. Bắt INSERT hoàn tất
+        projectCategoryRepository.flush();
+
+        // 6. Load lại Project + categories
+        Project updatedProject = projectRepository
+                .findByIdWithCategories(id)
+                .orElseThrow(() ->
+                        new ProjectNotFoundException(id)
+                );
+
+        return toResponse(updatedProject);
+    }
+    @Transactional
     public void delete(String id) {
 
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ProjectNotFoundException(id));
+                .orElseThrow(() ->
+                        new ProjectNotFoundException(id)
+                );
 
         projectRepository.delete(project);
-    }
-
-    public Project update(String id, UpdateProjectRequest request) {
-
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ProjectNotFoundException(id));
-
-        if (request.getName() != null) {
-            project.setName(request.getName());
-        }
-
-        if (request.getScope() != null) {
-            project.setScope(request.getScope());
-        }
-
-        if (request.getStage() != null) {
-            project.setStage(request.getStage());
-        }
-
-        if (request.getActivityStatus() != null) {
-            project.setActivityStatus(request.getActivityStatus());
-        }
-
-        if (request.getDetailLocation() != null) {
-            project.setDetailLocation(request.getDetailLocation());
-        }
-
-        return projectRepository.save(project);
     }
 
     @Transactional(readOnly = true)
     public List<ProjectResponse> getAll() {
 
-        return projectRepository.findAllWithCategories()
+        return projectRepository
+                .findAllWithCategories()
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -158,9 +194,11 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse getById(String id) {
 
-        Project project = projectRepository.findByIdWithCategories(id)
+        Project project = projectRepository
+                .findByIdWithCategories(id)
                 .orElseThrow(() ->
-                        new ProjectNotFoundException(id));
+                        new ProjectNotFoundException(id)
+                );
 
         return toResponse(project);
     }

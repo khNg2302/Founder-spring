@@ -3,21 +3,28 @@ package founder_spring.project.dto;
 import founder_spring.project.entity.ProjectActivityStatus;
 import founder_spring.project.entity.ProjectScope;
 import founder_spring.project.entity.ProjectStage;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
 public class UpdateProjectRequest {
 
+    @NotBlank(message = "Project name is required")
     @Size(max = 100, message = "Project name must not exceed 100 characters")
     private String name;
 
+    @NotNull(message = "Project scope is required")
     private ProjectScope scope;
 
+    @NotNull(message = "Project stage is required")
     private ProjectStage stage;
 
+    @NotNull(message = "Project activity status is required")
     private ProjectActivityStatus activityStatus;
 
+    @Size(max = 500, message = "Detail location must not exceed 500 characters")
     private String detailLocation;
 
     private List<String> categoryIds;
@@ -62,5 +69,11 @@ public class UpdateProjectRequest {
         this.detailLocation = detailLocation;
     }
 
+    public List<String> getCategoryIds() {
+        return categoryIds;
+    }
 
+    public void setCategoryIds(List<String> categoryIds) {
+        this.categoryIds = categoryIds;
+    }
 }

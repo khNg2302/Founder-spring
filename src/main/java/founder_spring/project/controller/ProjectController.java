@@ -31,8 +31,8 @@ public class ProjectController {
         projectService.delete(id);
     }
 
-    @PatchMapping("/{id}")
-    public Project update(
+    @PutMapping("/{id}")
+    public ProjectResponse update(
             @PathVariable String id,
             @Valid @RequestBody UpdateProjectRequest request
     ) {
