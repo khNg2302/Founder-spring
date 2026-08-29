@@ -13,10 +13,14 @@ import founder_spring.project.exception.ProjectNotFoundException;
 import founder_spring.project.repository.ProjectRepository;
 import founder_spring.project_category.entity.ProjectCategory;
 import founder_spring.project_category.repository.ProjectCategoryRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectService {
@@ -170,6 +174,7 @@ public class ProjectService {
 
         return toResponse(updatedProject);
     }
+
     @Transactional
     public void delete(String id) {
 
@@ -182,13 +187,38 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectResponse> getAll() {
+    public Page<ProjectResponse> getAll(Pageable pageable) {
 
-        return projectRepository
-                .findAllWithCategories()
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        Page<Project> projectPage =
+                projectRepository.findAllProjects(pageable);
+
+        List<String> projectIds =
+                projectPage.getContent()
+                        .stream()
+                        .map(Project::getId)
+                        .toList();
+
+        if (projectIds.isEmpty()) {
+            return projectPage.map(this::toResponse);
+        }
+
+        List<Project> projectsWithCategories =
+                projectRepository.findAllWithCategoriesByIds(
+                        projectIds
+                );
+
+        Map<String, Project> projectMap =
+                projectsWithCategories.stream()
+                        .collect(Collectors.toMap(
+                                Project::getId,
+                                project -> project
+                        ));
+
+        return projectPage.map(project ->
+                toResponse(
+                        projectMap.get(project.getId())
+                )
+        );
     }
 
     @Transactional(readOnly = true)
