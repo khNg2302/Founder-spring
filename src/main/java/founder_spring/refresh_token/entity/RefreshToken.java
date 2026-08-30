@@ -31,27 +31,27 @@ public class RefreshToken {
     @Column(name = "id", length = 25)
     private String id;
 
-    @Column(name = "userId", nullable = false, length = 25)
+    @Column(name = "\"userId\"", nullable = false, length = 25)
     private String userId;
 
-    @Column(name = "accountId", nullable = false, length = 25)
+    @Column(name = "\"accountId\"", nullable = false, length = 25)
     private String accountId;
 
-    @Column(name = "tokenHash", nullable = false, unique = true)
+    @Column(name = "\"tokenHash\"", nullable = false, unique = true)
     private String tokenHash;
 
-    @Column(name = "expiresAt", nullable = false)
+    @Column(name = "\"expiresAt\"", nullable = false)
     private LocalDateTime expiresAt;
 
-    @Column(name = "revokedAt")
+    @Column(name = "\"revokedAt\"")
     private LocalDateTime revokedAt;
 
-    @Column(name = "createdAt", nullable = false, updatable = false)
+    @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-            name = "userId",
+            name = "\"userId\"",
             referencedColumnName = "id",
             insertable = false,
             updatable = false

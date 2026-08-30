@@ -6,6 +6,7 @@ import founder_spring.refresh_token.repository.RefreshTokenRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -21,6 +22,8 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final CuidGenerator cuidGenerator;
 
+    private final SecureRandom secureRandom = new SecureRandom();
+
     public RefreshTokenService(
             RefreshTokenRepository refreshTokenRepository,
             CuidGenerator cuidGenerator
@@ -30,7 +33,7 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public String create(
+    public CreatedRefreshToken create(
             String userId,
             String accountId
     ) {
@@ -49,7 +52,10 @@ public class RefreshTokenService {
 
         refreshTokenRepository.save(refreshToken);
 
-        return rawToken;
+        return new CreatedRefreshToken(
+                rawToken,
+                refreshToken.getId()
+        );
     }
 
     @Transactional(readOnly = true)
@@ -91,7 +97,7 @@ public class RefreshTokenService {
 
         byte[] bytes = new byte[TOKEN_BYTES];
 
-        new SecureRandom().nextBytes(bytes);
+        secureRandom.nextBytes(bytes);
 
         return HexFormat.of().formatHex(bytes);
     }
@@ -104,7 +110,7 @@ public class RefreshTokenService {
                     MessageDigest.getInstance("SHA-256");
 
             byte[] hash =
-                    digest.digest(token.getBytes());
+                    digest.digest(token.getBytes(StandardCharsets.UTF_8));
 
             return HexFormat.of().formatHex(hash);
 

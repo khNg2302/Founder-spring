@@ -4,14 +4,17 @@ import founder_spring.account.entity.Account;
 import founder_spring.account.entity.AccountProvider;
 import founder_spring.account.entity.AccountStatus;
 import founder_spring.account.repository.AccountRepository;
+import founder_spring.auth.dto.*;
 import founder_spring.common.exception.ConflictException;
+import founder_spring.common.exception.InvalidCredentialsException;
 import founder_spring.common.util.CuidGenerator;
 import founder_spring.email_verification_token.service.EmailVerificationTokenService;
+import founder_spring.refresh_token.entity.RefreshToken;
+import founder_spring.refresh_token.service.CreatedRefreshToken;
+import founder_spring.refresh_token.service.RefreshTokenService;
 import founder_spring.user.entity.User;
 import founder_spring.user.entity.UserStatus;
 import founder_spring.user.repository.UserRepository;
-import founder_spring.auth.dto.RegisterRequest;
-import founder_spring.auth.dto.RegisterResponse;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,17 +32,24 @@ public class AuthService {
     private final Argon2PasswordEncoder passwordEncoder =
             Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
 
+    private final RefreshTokenService refreshTokenService;
+    private final TokenService tokenService;
+
     public AuthService(
             UserRepository userRepository,
             AccountRepository accountRepository,
             EmailVerificationTokenService emailVerificationTokenService,
-            CuidGenerator cuidGenerator
+            CuidGenerator cuidGenerator,
+            RefreshTokenService refreshTokenService,
+            TokenService tokenService
     ) {
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
         this.emailVerificationTokenService =
                 emailVerificationTokenService;
         this.cuidGenerator = cuidGenerator;
+        this.refreshTokenService = refreshTokenService;
+        this.tokenService = tokenService;
     }
 
     @Transactional
@@ -109,5 +119,107 @@ public class AuthService {
                 verificationToken.token(),
                 verificationToken.expiresAt()
         );
+    }
+    @Transactional
+    public LoginResponse login(LoginRequest request) {
+
+        Account account = accountRepository
+                .findByProviderAndEmail(
+                        AccountProvider.LOCAL,
+                        request.email()
+                )
+                .orElseThrow(() ->
+                        new InvalidCredentialsException(
+                                "Invalid email or password"
+                        )
+                );
+
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new InvalidCredentialsException(
+                    "Invalid email or password"
+            );
+        }
+
+        if (account.getPasswordHash() == null) {
+            throw new InvalidCredentialsException(
+                    "Invalid email or password"
+            );
+        }
+
+        boolean validPassword =
+                passwordEncoder.matches(
+                        request.password(),
+                        account.getPasswordHash()
+                );
+
+        if (!validPassword) {
+            throw new InvalidCredentialsException(
+                    "Invalid email or password"
+            );
+        }
+
+        CreatedRefreshToken createdRefreshToken =
+                refreshTokenService.create(
+                        account.getUserId(),
+                        account.getId()
+                );
+
+        String accessToken =
+                tokenService.createAccessToken(
+                        account.getUserId(),
+                        account.getId(),
+                        createdRefreshToken.sessionId()
+                );
+
+        return new LoginResponse(
+                accessToken,
+                createdRefreshToken.token()
+        );
+    }
+
+    @Transactional
+    public RefreshTokenResponse refresh(String rawRefreshToken) {
+
+        RefreshToken oldToken =
+                refreshTokenService.findValidToken(rawRefreshToken);
+
+        if (oldToken == null) {
+            throw new InvalidCredentialsException(
+                    "Invalid refresh token"
+            );
+        }
+
+        refreshTokenService.revoke(oldToken);
+
+        CreatedRefreshToken newRefreshToken =
+                refreshTokenService.create(
+                        oldToken.getUserId(),
+                        oldToken.getAccountId()
+                );
+
+        String accessToken =
+                tokenService.createAccessToken(
+                        oldToken.getUserId(),
+                        oldToken.getAccountId(),
+                        newRefreshToken.sessionId()
+                );
+
+        return new RefreshTokenResponse(
+                accessToken,
+                newRefreshToken.token()
+        );
+    }
+
+    @Transactional
+    public void logout(String rawRefreshToken) {
+
+        RefreshToken refreshToken =
+                refreshTokenService.findValidToken(rawRefreshToken);
+
+        if (refreshToken == null) {
+            return;
+        }
+
+        refreshTokenService.revoke(refreshToken);
     }
 }
