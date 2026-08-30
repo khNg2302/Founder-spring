@@ -3,7 +3,6 @@ package founder_spring.category.controller;
 import founder_spring.category.dto.CategoryResponse;
 import founder_spring.category.dto.CreateCategoryRequest;
 import founder_spring.category.dto.UpdateCategoryRequest;
-import founder_spring.category.entity.Category;
 import founder_spring.category.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -27,8 +26,8 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public Category findById(@PathVariable String id) {
-        return categoryService.findById(id);
+    public CategoryResponse findById(@PathVariable String id) {
+        return categoryService.findByIdResponse(id);
     }
 
     @PostMapping
@@ -40,7 +39,7 @@ public class CategoryController {
     }
 
     @PatchMapping("/{id}")
-    public Category update(
+    public CategoryResponse update(
             @PathVariable String id,
             @Valid @RequestBody UpdateCategoryRequest request
     ) {

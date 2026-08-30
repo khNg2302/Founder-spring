@@ -5,6 +5,7 @@ import founder_spring.category.dto.CreateCategoryRequest;
 import founder_spring.category.dto.UpdateCategoryRequest;
 import founder_spring.category.entity.Category;
 import founder_spring.category.exception.CategoryNotFoundException;
+import founder_spring.category.exception.InvalidCategoryException;
 import founder_spring.category.repository.CategoryRepository;
 import founder_spring.common.util.CuidGenerator;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public List<CategoryResponse> findAll() {
+
         return categoryRepository.findAll()
                 .stream()
                 .map(this::toResponse)
@@ -53,11 +55,23 @@ public class CategoryService {
     }
 
     public Category findById(String id) {
+
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new CategoryNotFoundException(id));
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(id)
+                );
     }
 
-    public CategoryResponse create(CreateCategoryRequest request) {
+    @Transactional(readOnly = true)
+    public CategoryResponse findByIdResponse(String id) {
+
+        return toResponse(findById(id));
+    }
+
+    @Transactional
+    public CategoryResponse create(
+            CreateCategoryRequest request
+    ) {
 
         Category category = new Category();
 
@@ -66,16 +80,26 @@ public class CategoryService {
         category.setType(request.getType());
 
         if (request.getParentId() != null) {
-            Category parent = findById(request.getParentId());
+
+            Category parent =
+                    findById(request.getParentId());
+
+            validateParent(category, parent);
+
             category.setParent(parent);
         }
 
-        Category saved = categoryRepository.save(category);
+        Category saved =
+                categoryRepository.save(category);
 
         return toResponse(saved);
     }
 
-    public Category update(String id, UpdateCategoryRequest request) {
+    @Transactional
+    public CategoryResponse update(
+            String id,
+            UpdateCategoryRequest request
+    ) {
 
         Category category = findById(id);
 
@@ -88,11 +112,18 @@ public class CategoryService {
         }
 
         if (request.getParentId() != null) {
-            Category parent = findById(request.getParentId());
+
+            Category parent =
+                    findById(request.getParentId());
+
+            validateParent(category, parent);
+
             category.setParent(parent);
         }
 
-        return categoryRepository.save(category);
+        return toResponse(
+                categoryRepository.save(category)
+        );
     }
 
     public void delete(String id) {
@@ -100,5 +131,17 @@ public class CategoryService {
         Category category = findById(id);
 
         categoryRepository.delete(category);
+    }
+
+    private void validateParent(
+            Category category,
+            Category parent
+    ) {
+
+        if (category.getId().equals(parent.getId())) {
+            throw new InvalidCategoryException(
+                    "Category cannot be its own parent"
+            );
+        }
     }
 }
