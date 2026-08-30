@@ -1,6 +1,7 @@
 package founder_spring.project.entity;
 
 import founder_spring.project_category.entity.ProjectCategory;
+import founder_spring.user.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -28,21 +29,21 @@ public class Project {
     @Column(nullable = false)
     private ProjectScope scope;
 
-    @Column(length = 500)
-    private String detailLocation;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProjectStage stage;
 
+    @Column(name = "detail_location", length = 500)
+    private String detailLocation;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "activity_status", nullable = false)
     private ProjectActivityStatus activityStatus;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @OneToMany(
@@ -64,4 +65,11 @@ public class Project {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "created_by",
+            nullable = false
+    )
+    private User createdBy;
 }
