@@ -3,6 +3,7 @@ package founder_spring.common.exception;
 import founder_spring.category.exception.CategoryNotFoundException;
 import founder_spring.category.exception.InvalidCategoryException;
 import founder_spring.project.exception.ProjectNotFoundException;
+import founder_spring.user.exception.UserNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -133,6 +134,22 @@ public class GlobalExceptionHandler {
                 "INTERNAL_SERVER_ERROR",
                 "An unexpected error occurred"
         );
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(
+            UserNotFoundException ex
+    ) {
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "USER_NOT_FOUND",
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(

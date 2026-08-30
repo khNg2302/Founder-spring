@@ -21,19 +21,31 @@ public class User {
     @Column(name = "name", length = 100)
     private String name;
 
-    @Column(name = "avatarUrl", length = 500)
+    @Column(name = "\"avatarUrl\"", length = 500)
     private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private UserStatus status;
 
-    @Column(name = "deletionRequestedAt")
+    @Column(name = "\"deletionRequestedAt\"")
     private LocalDateTime deletionRequestedAt;
 
-    @Column(name = "createdAt", nullable = false, updatable = false)
+    @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updatedAt", nullable = false)
+    @Column(name = "\"updatedAt\"", nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
