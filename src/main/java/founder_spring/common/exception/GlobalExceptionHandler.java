@@ -2,11 +2,13 @@ package founder_spring.common.exception;
 
 import founder_spring.category.exception.CategoryNotFoundException;
 import founder_spring.category.exception.InvalidCategoryException;
+import founder_spring.project.exception.ProjectNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import tools.jackson.databind.exc.InvalidFormatException;
 
@@ -18,10 +20,10 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleHttpMessageNotReadable(
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
             HttpMessageNotReadableException ex
     ) {
+
         String message = "Invalid request body";
 
         Throwable cause = ex.getCause();
@@ -29,25 +31,47 @@ public class GlobalExceptionHandler {
         if (cause instanceof InvalidFormatException invalidFormatException
                 && invalidFormatException.getTargetType().isEnum()) {
 
-            Class<?> enumClass = invalidFormatException.getTargetType();
+            Class<?> enumClass =
+                    invalidFormatException.getTargetType();
 
-            Object[] values = enumClass.getEnumConstants();
+            Object[] values =
+                    enumClass.getEnumConstants();
 
-            String allowedValues = Arrays.stream(values)
-                    .map(Object::toString)
-                    .collect(Collectors.joining(", "));
+            String allowedValues =
+                    Arrays.stream(values)
+                            .map(Object::toString)
+                            .collect(Collectors.joining(", "));
 
-            message = "Invalid value '"
-                    + invalidFormatException.getValue()
-                    + "'. Allowed values: "
-                    + allowedValues;
+            message =
+                    "Invalid value '"
+                            + invalidFormatException.getValue()
+                            + "'. Allowed values: "
+                            + allowedValues;
         }
 
-        return new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
                 "INVALID_REQUEST_BODY",
-                message,
-                LocalDateTime.now()
+                message
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(
+            MethodArgumentNotValidException ex
+    ) {
+
+        String message = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("Validation failed");
+
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_ERROR",
+                message
         );
     }
 
@@ -56,31 +80,76 @@ public class GlobalExceptionHandler {
             CategoryNotFoundException ex
     ) {
 
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
                 "CATEGORY_NOT_FOUND",
-                ex.getMessage(),
-                LocalDateTime.now()
+                ex.getMessage()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(response);
     }
 
     @ExceptionHandler(InvalidCategoryException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCategory(
             InvalidCategoryException ex
     ) {
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
+
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
                 "INVALID_CATEGORY",
-                ex.getMessage(),
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(ProjectNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProjectNotFound(
+            ProjectNotFoundException ex
+    ) {
+
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                "PROJECT_NOT_FOUND",
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+            ConstraintViolationException ex
+    ) {
+
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_ERROR",
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(
+            Exception ex
+    ) {
+
+        return buildResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "INTERNAL_SERVER_ERROR",
+                "An unexpected error occurred"
+        );
+    }
+
+    private ResponseEntity<ErrorResponse> buildResponse(
+            HttpStatus status,
+            String code,
+            String message
+    ) {
+
+        ErrorResponse response = new ErrorResponse(
+                status.value(),
+                code,
+                message,
                 LocalDateTime.now()
         );
 
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(status)
                 .body(response);
     }
 }
