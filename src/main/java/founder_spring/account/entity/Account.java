@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -41,45 +43,47 @@ public class Account {
     @Column(name = "id", length = 25)
     private String id;
 
-    @Column(name = "userId", nullable = false, length = 25)
+    @Column(name = "\"userId\"", nullable = false, length = 25)
     private String userId;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "provider", nullable = false)
     private AccountProvider provider;
 
-    @Column(name = "providerAccountId")
+    @Column(name = "\"providerAccountId\"")
     private String providerAccountId;
 
     @Column(name = "email")
     private String email;
 
-    @Column(name = "passwordHash")
+    @Column(name = "\"passwordHash\"")
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", nullable = false)
     private AccountStatus status;
 
-    @Column(name = "deletedAt")
+    @Column(name = "\"deletedAt\"")
     private LocalDateTime deletedAt;
 
-    @Column(name = "emailVerifiedAt")
+    @Column(name = "\"emailVerifiedAt\"")
     private LocalDateTime emailVerifiedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-            name = "userId",
+            name = "\"userId\"",
             referencedColumnName = "id",
             insertable = false,
             updatable = false
     )
     private User user;
 
-    @Column(name = "createdAt", nullable = false, updatable = false)
+    @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updatedAt", nullable = false)
+    @Column(name = "\"updatedAt\"", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist

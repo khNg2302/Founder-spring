@@ -33,24 +33,24 @@ public class EmailVerificationToken {
     @Column(name = "id", length = 25)
     private String id;
 
-    @Column(name = "accountId", nullable = false, length = 25)
+    @Column(name = "\"accountId\"", nullable = false, length = 25)
     private String accountId;
 
-    @Column(name = "tokenHash", nullable = false)
+    @Column(name = "\"tokenHash\"", nullable = false)
     private String tokenHash;
 
-    @Column(name = "expiresAt", nullable = false)
+    @Column(name = "\"expiresAt\"", nullable = false)
     private LocalDateTime expiresAt;
 
-    @Column(name = "usedAt")
+    @Column(name = "\"usedAt\"")
     private LocalDateTime usedAt;
 
-    @Column(name = "createdAt", nullable = false, updatable = false)
+    @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-            name = "accountId",
+            name = "\"accountId\"",
             referencedColumnName = "id",
             insertable = false,
             updatable = false
