@@ -40,4 +40,17 @@ public class RolePermissionController {
                 permissionId
         );
     }
+
+    @DeleteMapping("/{roleId}/permissions/{permissionId}")
+    @PreAuthorize("hasAuthority('role:permission:remove')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removePermission(
+            @PathVariable String roleId,
+            @PathVariable String permissionId
+    ) {
+        rolePermissionService.removePermission(
+                roleId,
+                permissionId
+        );
+    }
 }

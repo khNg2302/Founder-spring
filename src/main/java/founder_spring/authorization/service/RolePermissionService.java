@@ -82,4 +82,23 @@ public class RolePermissionService {
 
         rolePermissionRepository.save(rolePermission);
     }
+
+    @Transactional
+    public void removePermission(
+            String roleId,
+            String permissionId
+    ) {
+        RolePermissionId id = new RolePermissionId(
+                roleId,
+                permissionId
+        );
+
+        if (!rolePermissionRepository.existsById(id)) {
+            throw new ResourceNotFoundException(
+                    "Permission is not assigned to this role"
+            );
+        }
+
+        rolePermissionRepository.deleteById(id);
+    }
 }
