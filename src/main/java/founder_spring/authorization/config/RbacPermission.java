@@ -28,3 +28,4 @@ public final class RbacPermission {
     public static final String PERMISSION_UPDATE = "permission:update";
     public static final String PERMISSION_DELETE = "permission:delete";
 }
+
