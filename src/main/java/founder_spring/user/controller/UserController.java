@@ -5,6 +5,7 @@ import founder_spring.user.dto.UserResponse;
 import founder_spring.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
