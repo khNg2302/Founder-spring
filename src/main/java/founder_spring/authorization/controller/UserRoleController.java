@@ -35,4 +35,14 @@ public class UserRoleController {
     ) {
         userRoleService.assignRole(userId, roleId);
     }
+
+    @DeleteMapping("/{userId}/roles/{roleId}")
+    @PreAuthorize("hasAuthority('user:role:remove')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeRole(
+            @PathVariable String userId,
+            @PathVariable String roleId
+    ) {
+        userRoleService.removeRole(userId, roleId);
+    }
 }

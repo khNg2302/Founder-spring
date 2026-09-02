@@ -82,4 +82,23 @@ public class UserRoleService {
 
         userRoleRepository.save(userRole);
     }
+
+    @Transactional
+    public void removeRole(
+            String userId,
+            String roleId
+    ) {
+        UserRoleId id = new UserRoleId(
+                userId,
+                roleId
+        );
+
+        if (!userRoleRepository.existsById(id)) {
+            throw new ResourceNotFoundException(
+                    "Role is not assigned to this user"
+            );
+        }
+
+        userRoleRepository.deleteById(id);
+    }
 }
