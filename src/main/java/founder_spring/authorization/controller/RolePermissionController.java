@@ -2,11 +2,9 @@ package founder_spring.authorization.controller;
 
 import founder_spring.authorization.dto.RolePermissionResponse;
 import founder_spring.authorization.service.RolePermissionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -28,5 +26,18 @@ public class RolePermissionController {
             @PathVariable String roleId
     ) {
         return rolePermissionService.getPermissionsByRoleId(roleId);
+    }
+
+    @PostMapping("/{roleId}/permissions/{permissionId}")
+    @PreAuthorize("hasAuthority('role:permission:assign')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void assignPermission(
+            @PathVariable String roleId,
+            @PathVariable String permissionId
+    ) {
+        rolePermissionService.assignPermission(
+                roleId,
+                permissionId
+        );
     }
 }
