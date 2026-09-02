@@ -2,6 +2,7 @@ package founder_spring.authorization.controller;
 
 import founder_spring.authorization.dto.CreatePermissionRequest;
 import founder_spring.authorization.dto.PermissionResponse;
+import founder_spring.authorization.dto.UpdatePermissionRequest;
 import founder_spring.authorization.repository.PermissionRepository;
 import founder_spring.authorization.service.PermissionService;
 import jakarta.validation.Valid;
@@ -50,5 +51,14 @@ public class PermissionController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @PutMapping("/{permissionId}")
+    @PreAuthorize("hasAuthority('permission:update')")
+    public PermissionResponse updatePermission(
+            @PathVariable String permissionId,
+            @Valid @RequestBody UpdatePermissionRequest request
+    ) {
+        return permissionService.update(permissionId, request);
     }
 }
