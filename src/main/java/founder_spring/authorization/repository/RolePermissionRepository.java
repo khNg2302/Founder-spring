@@ -12,4 +12,6 @@ public interface RolePermissionRepository
     List<RolePermission> findByIdRoleId(String roleId);
 
     boolean existsByIdRoleId(String roleId);
+
+    boolean existsByIdPermissionId(String permissionId);
 }

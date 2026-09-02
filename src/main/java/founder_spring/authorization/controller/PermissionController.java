@@ -61,4 +61,13 @@ public class PermissionController {
     ) {
         return permissionService.update(permissionId, request);
     }
+
+    @DeleteMapping("/{permissionId}")
+    @PreAuthorize("hasAuthority('permission:delete')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePermission(
+            @PathVariable String permissionId
+    ) {
+        permissionService.delete(permissionId);
+    }
 }

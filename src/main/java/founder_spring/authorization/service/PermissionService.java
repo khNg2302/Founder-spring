@@ -5,6 +5,7 @@ import founder_spring.authorization.dto.PermissionResponse;
 import founder_spring.authorization.dto.UpdatePermissionRequest;
 import founder_spring.authorization.entity.Permission;
 import founder_spring.authorization.repository.PermissionRepository;
+import founder_spring.authorization.repository.RolePermissionRepository;
 import founder_spring.common.exception.ConflictException;
 import founder_spring.common.exception.ResourceNotFoundException;
 import founder_spring.common.util.CuidGenerator;
@@ -17,13 +18,15 @@ public class PermissionService {
 
     private final PermissionRepository permissionRepository;
     private final CuidGenerator cuidGenerator;
+    private final RolePermissionRepository rolePermissionRepository;
 
     public PermissionService(
             PermissionRepository permissionRepository,
-            CuidGenerator cuidGenerator
+            CuidGenerator cuidGenerator, RolePermissionRepository rolePermissionRepository
     ) {
         this.permissionRepository = permissionRepository;
         this.cuidGenerator = cuidGenerator;
+        this.rolePermissionRepository = rolePermissionRepository;
     }
 
     public PermissionResponse create(CreatePermissionRequest request) {
@@ -92,5 +95,24 @@ public class PermissionService {
                 saved.getName(),
                 saved.getDescription()
         );
+    }
+
+    public void delete(String permissionId) {
+
+        Permission permission = permissionRepository
+                .findById(permissionId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Permission not found"
+                        )
+                );
+
+        if (rolePermissionRepository.existsByIdPermissionId(permissionId)) {
+            throw new ConflictException(
+                    "Cannot delete permission because it is assigned to roles"
+            );
+        }
+
+        permissionRepository.delete(permission);
     }
 }
