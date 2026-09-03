@@ -90,10 +90,8 @@ public class OAuthService {
 
         } else {
 
-            // 1. Tìm User hiện có theo email
             user = findUserByEmail(email);
 
-            // 2. Không có User → tạo User mới
             if (user == null) {
 
                 user = new User();
@@ -106,7 +104,6 @@ public class OAuthService {
                 userRepository.save(user);
             }
 
-            // 3. Tạo Google Account cho User
             account = new Account();
 
             account.setId(cuidGenerator.generate());

@@ -1,9 +1,11 @@
 package founder_spring.user.controller;
 
 import founder_spring.common.dto.PageResponse;
+import founder_spring.common.exception.BadRequestException;
 import founder_spring.user.dto.UpdateUserStatusRequest;
 import founder_spring.user.dto.UserDetailResponse;
 import founder_spring.user.dto.UserListResponse;
+import founder_spring.user.dto.UserSortField;
 import founder_spring.user.entity.UserStatus;
 import founder_spring.user.service.UserService;
 import jakarta.validation.Valid;
@@ -37,6 +39,8 @@ public class AdminUserController {
             )
             Pageable pageable
     ) {
+        validateSort(pageable);
+
         return userService.getUsers(
                 search,
                 status,
@@ -65,5 +69,26 @@ public class AdminUserController {
                 request.status(),
                 authentication.getName()
         );
+    }
+
+    private void validateSort(Pageable pageable) {
+
+        for (Sort.Order order : pageable.getSort()) {
+
+            boolean allowed = false;
+
+            for (UserSortField field : UserSortField.values()) {
+                if (field.getProperty().equals(order.getProperty())) {
+                    allowed = true;
+                    break;
+                }
+            }
+
+            if (!allowed) {
+                throw new BadRequestException(
+                        "Invalid sort field: " + order.getProperty()
+                );
+            }
+        }
     }
 }

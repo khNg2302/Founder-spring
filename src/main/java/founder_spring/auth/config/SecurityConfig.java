@@ -2,6 +2,8 @@ package founder_spring.auth.config;
 
 import founder_spring.auth.oauth.OAuth2SuccessHandler;
 import founder_spring.security.JwtAuthenticationConverter;
+import founder_spring.security.RestAccessDeniedHandler;
+import founder_spring.security.RestAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -18,13 +20,20 @@ public class SecurityConfig {
             oAuth2SuccessHandler;
     private final JwtAuthenticationConverter
             jwtAuthenticationConverter;
+    private final RestAuthenticationEntryPoint
+            authenticationEntryPoint;
+
+    private final RestAccessDeniedHandler
+            accessDeniedHandler;
 
     public SecurityConfig(
-            OAuth2SuccessHandler oAuth2SuccessHandler, JwtAuthenticationConverter jwtAuthenticationConverter
+            OAuth2SuccessHandler oAuth2SuccessHandler, JwtAuthenticationConverter jwtAuthenticationConverter, RestAuthenticationEntryPoint authenticationEntryPoint, RestAccessDeniedHandler accessDeniedHandler
     ) {
         this.oAuth2SuccessHandler =
                 oAuth2SuccessHandler;
         this.jwtAuthenticationConverter = jwtAuthenticationConverter;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Bean
@@ -58,11 +67,18 @@ public class SecurityConfig {
                 )
 
                 .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(jwt ->
-                                jwt.jwtAuthenticationConverter(
-                                        jwtAuthenticationConverter
+                        oauth2
+                                .authenticationEntryPoint(
+                                        authenticationEntryPoint
                                 )
-                        )
+                                .accessDeniedHandler(
+                                        accessDeniedHandler
+                                )
+                                .jwt(jwt ->
+                                        jwt.jwtAuthenticationConverter(
+                                                jwtAuthenticationConverter
+                                        )
+                                )
                 );
 
         return http.build();
