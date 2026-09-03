@@ -4,6 +4,7 @@ import founder_spring.account.entity.Account;
 import founder_spring.account.entity.AccountProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface AccountRepository
@@ -20,4 +21,6 @@ public interface AccountRepository
     );
 
     Optional<Account> findByEmail(String email);
+
+    List<Account> findAllByEmailIgnoreCase(String email);
 }

@@ -31,20 +31,9 @@ public class UserRoleService {
         this.userRepository = userRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<UserRoleResponse> getRolesByUserId(String userId) {
-
-        return userRoleRepository.findByIdUserId(userId)
-                .stream()
-                .map(userRole -> roleRepository
-                        .findById(userRole.getId().getRoleId())
-                        .orElse(null)
-                )
-                .filter(Objects::nonNull)
-                .map(role -> new UserRoleResponse(
-                        role.getId(),
-                        role.getName()
-                ))
-                .toList();
+        return roleRepository.findRolesByUserId(userId);
     }
 
     @Transactional
