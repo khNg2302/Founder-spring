@@ -31,24 +31,11 @@ public class RolePermissionService {
         this.roleRepository = roleRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<RolePermissionResponse> getPermissionsByRoleId(
             String roleId
     ) {
-        return rolePermissionRepository.findByIdRoleId(roleId)
-                .stream()
-                .map(rolePermission ->
-                        permissionRepository.findById(
-                                rolePermission.getId().getPermissionId()
-                        ).orElse(null)
-                )
-                .filter(Objects::nonNull)
-                .map(permission ->
-                        new RolePermissionResponse(
-                                permission.getId(),
-                                permission.getName()
-                        )
-                )
-                .toList();
+        return permissionRepository.findPermissionsByRoleId(roleId);
     }
 
     @Transactional
