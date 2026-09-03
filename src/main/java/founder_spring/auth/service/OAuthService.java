@@ -4,6 +4,8 @@ import founder_spring.account.entity.Account;
 import founder_spring.account.entity.AccountProvider;
 import founder_spring.account.entity.AccountStatus;
 import founder_spring.account.repository.AccountRepository;
+import founder_spring.common.exception.ConflictException;
+import founder_spring.common.exception.ResourceNotFoundException;
 import founder_spring.common.util.CuidGenerator;
 import founder_spring.refresh_token.service.CreatedRefreshToken;
 import founder_spring.refresh_token.service.RefreshTokenService;
@@ -13,6 +15,10 @@ import founder_spring.user.repository.UserRepository;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class OAuthService {
@@ -84,48 +90,45 @@ public class OAuthService {
 
         } else {
 
-            account = accountRepository
-                    .findByProviderAndEmail(
-                            AccountProvider.GOOGLE,
-                            email
-                    )
-                    .orElse(null);
+            // 1. Tìm User hiện có theo email
+            user = findUserByEmail(email);
 
-            if (account != null) {
+            // 2. Không có User → tạo User mới
+            if (user == null) {
 
-                user = account.getUser();
+                user = new User();
 
-            } else {
+                user.setId(cuidGenerator.generate());
+                user.setName(name);
+                user.setAvatarUrl(avatarUrl);
+                user.setStatus(UserStatus.ACTIVE);
 
-                Account existingAccount =
-                        accountRepository
-                                .findByEmail(email)
-                                .orElse(null);
-
-                if (existingAccount != null) {
-                    user = existingAccount.getUser();
-                } else {
-                    user = new User();
-
-                    user.setId(cuidGenerator.generate());
-                    user.setName(name);
-                    user.setAvatarUrl(avatarUrl);
-                    user.setStatus(UserStatus.ACTIVE);
-
-                    userRepository.save(user);
-                }
-
-                account = new Account();
-
-                account.setId(cuidGenerator.generate());
-                account.setUserId(user.getId());
-                account.setProvider(AccountProvider.GOOGLE);
-                account.setProviderAccountId(providerAccountId);
-                account.setEmail(email);
-                account.setStatus(AccountStatus.ACTIVE);
-
-                accountRepository.save(account);
+                userRepository.save(user);
             }
+
+            // 3. Tạo Google Account cho User
+            account = new Account();
+
+            account.setId(cuidGenerator.generate());
+            account.setUserId(user.getId());
+            account.setProvider(AccountProvider.GOOGLE);
+            account.setProviderAccountId(providerAccountId);
+            account.setEmail(email);
+            account.setStatus(AccountStatus.ACTIVE);
+
+            accountRepository.save(account);
+        }
+
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new IllegalStateException(
+                    "OAuth account is not active"
+            );
+        }
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new IllegalStateException(
+                    "User account is not active"
+            );
         }
 
         CreatedRefreshToken refreshToken =
@@ -185,19 +188,19 @@ public class OAuthService {
         User user;
 
         if (account != null) {
+
             user = account.getUser();
 
         } else {
 
-            Account existingAccount =
-                    accountRepository.findByEmail(email)
-                            .orElse(null);
 
-            if (existingAccount != null) {
-                user = existingAccount.getUser();
+            user = findUserByEmail(email);
 
-            } else {
+
+            if (user == null) {
+
                 user = new User();
+
                 user.setId(cuidGenerator.generate());
                 user.setName(name);
                 user.setAvatarUrl(avatarUrl);
@@ -207,6 +210,7 @@ public class OAuthService {
             }
 
             account = new Account();
+
             account.setId(cuidGenerator.generate());
             account.setUserId(user.getId());
             account.setProvider(AccountProvider.GITHUB);
@@ -215,6 +219,18 @@ public class OAuthService {
             account.setStatus(AccountStatus.ACTIVE);
 
             accountRepository.save(account);
+        }
+
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new IllegalStateException(
+                    "OAuth account is not active"
+            );
+        }
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new IllegalStateException(
+                    "User account is not active"
+            );
         }
 
         CreatedRefreshToken refreshToken =
@@ -234,5 +250,34 @@ public class OAuthService {
                 accessTokenFounder,
                 refreshToken.token()
         );
+    }
+
+    private User findUserByEmail(String email) {
+
+        List<Account> accounts =
+                accountRepository.findAllByEmailIgnoreCase(email);
+
+        if (accounts.isEmpty()) {
+            return null;
+        }
+
+        Set<String> userIds = accounts.stream()
+                .map(Account::getUserId)
+                .collect(Collectors.toSet());
+
+        if (userIds.size() > 1) {
+            throw new ConflictException(
+                    "Email is linked to multiple users"
+            );
+        }
+
+        String userId = userIds.iterator().next();
+
+        return userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found"
+                        )
+                );
     }
 }

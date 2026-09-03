@@ -5,8 +5,10 @@ import founder_spring.account.entity.AccountProvider;
 import founder_spring.account.entity.AccountStatus;
 import founder_spring.account.repository.AccountRepository;
 import founder_spring.auth.dto.*;
+import founder_spring.common.exception.BadRequestException;
 import founder_spring.common.exception.ConflictException;
 import founder_spring.common.exception.InvalidCredentialsException;
+import founder_spring.common.exception.ResourceNotFoundException;
 import founder_spring.common.util.CuidGenerator;
 import founder_spring.email_verification_token.service.EmailVerificationTokenService;
 import founder_spring.refresh_token.entity.RefreshToken;
@@ -140,6 +142,19 @@ public class AuthService {
             );
         }
 
+        User user = userRepository.findById(account.getUserId())
+                .orElseThrow(() ->
+                        new InvalidCredentialsException(
+                                "Invalid email or password"
+                        )
+                );
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new InvalidCredentialsException(
+                    "Invalid email or password"
+            );
+        }
+
         if (account.getPasswordHash() == null) {
             throw new InvalidCredentialsException(
                     "Invalid email or password"
@@ -186,6 +201,17 @@ public class AuthService {
         if (oldToken == null) {
             throw new InvalidCredentialsException(
                     "Invalid refresh token"
+            );
+        }
+
+        User user = userRepository.findById(oldToken.getUserId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found")
+                );
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new BadRequestException(
+                    "User account is not active"
             );
         }
 
