@@ -75,7 +75,12 @@ public class RbacSeeder {
                 RbacPermission.PERMISSION_READ,
                 RbacPermission.PERMISSION_CREATE,
                 RbacPermission.PERMISSION_UPDATE,
-                RbacPermission.PERMISSION_DELETE
+                RbacPermission.PERMISSION_DELETE,
+
+                RbacPermission.AUDIENCE_TYPE_READ,
+                RbacPermission.AUDIENCE_TYPE_CREATE,
+                RbacPermission.AUDIENCE_TYPE_UPDATE,
+                RbacPermission.AUDIENCE_TYPE_DELETE
         );
 
         for (String name : permissions) {

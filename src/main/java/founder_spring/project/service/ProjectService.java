@@ -4,6 +4,7 @@ import founder_spring.category.dto.CategorySummaryResponse;
 import founder_spring.category.entity.Category;
 import founder_spring.category.exception.CategoryNotFoundException;
 import founder_spring.category.repository.CategoryRepository;
+import founder_spring.common.exception.ConflictException;
 import founder_spring.common.exception.ResourceNotFoundException;
 import founder_spring.common.util.CuidGenerator;
 import founder_spring.project.dto.CreateProjectRequest;
@@ -15,6 +16,11 @@ import founder_spring.project.entity.ProjectScope;
 import founder_spring.project.entity.ProjectStage;
 import founder_spring.project.exception.ProjectNotFoundException;
 import founder_spring.project.repository.ProjectRepository;
+import founder_spring.project_audience.dto.AudienceTypeResponse;
+import founder_spring.project_audience.entity.AudienceType;
+import founder_spring.project_audience.entity.ProjectAudience;
+import founder_spring.project_audience.repository.AudienceTypeRepository;
+import founder_spring.project_audience.repository.ProjectAudienceRepository;
 import founder_spring.project_category.entity.ProjectCategory;
 import founder_spring.project_category.repository.ProjectCategoryRepository;
 import founder_spring.user.entity.User;
@@ -39,21 +45,29 @@ public class ProjectService {
     private final CategoryRepository categoryRepository;
     private final ProjectCategoryRepository projectCategoryRepository;
     private final UserRepository userRepository;
+    private final ProjectAudienceRepository projectAudienceRepository;
+    private final AudienceTypeRepository audienceTypeRepository;
 
     public ProjectService(
             ProjectRepository projectRepository,
             CuidGenerator cuidGenerator,
             CategoryRepository categoryRepository,
-            ProjectCategoryRepository projectCategoryRepository, UserRepository userRepository
+            ProjectCategoryRepository projectCategoryRepository, UserRepository userRepository, ProjectAudienceRepository projectAudienceRepository, AudienceTypeRepository audienceTypeRepository
     ) {
         this.projectRepository = projectRepository;
         this.cuidGenerator = cuidGenerator;
         this.categoryRepository = categoryRepository;
         this.projectCategoryRepository = projectCategoryRepository;
         this.userRepository = userRepository;
+        this.projectAudienceRepository = projectAudienceRepository;
+
+        this.audienceTypeRepository = audienceTypeRepository;
     }
 
-    private ProjectResponse toResponse(Project project) {
+    private ProjectResponse toResponse(
+            Project project,
+            List<ProjectAudience> audiences
+    ) {
 
         ProjectResponse response = new ProjectResponse();
 
@@ -81,7 +95,36 @@ public class ProjectService {
 
         response.setCategories(categories);
 
+        List<AudienceTypeResponse> audienceTypes =
+                audiences.stream()
+                        .map(projectAudience -> {
+
+                            AudienceType audienceType =
+                                    projectAudience.getAudienceType();
+
+                            return AudienceTypeResponse.builder()
+                                    .id(audienceType.getId())
+                                    .name(audienceType.getName())
+                                    .description(audienceType.getDescription())
+                                    .active(audienceType.getActive())
+                                    .createdAt(audienceType.getCreatedAt())
+                                    .updatedAt(audienceType.getUpdatedAt())
+                                    .build();
+                        })
+                        .toList();
+
+        response.setAudienceTypes(audienceTypes);
+
         return response;
+    }
+
+    private ProjectResponse toResponse(Project project) {
+
+        List<ProjectAudience> audiences =
+                projectAudienceRepository
+                        .findAllByProjectId(project.getId());
+
+        return toResponse(project, audiences);
     }
 
     @Transactional
@@ -119,6 +162,45 @@ public class ProjectService {
             }
         }
 
+        if (request.getAudienceTypeIds() != null
+                && !request.getAudienceTypeIds().isEmpty()) {
+
+            if (request.getAudienceTypeIds() != null
+                    && request.getAudienceTypeIds().size()
+                    != request.getAudienceTypeIds().stream().distinct().count()) {
+
+                throw new ConflictException(
+                        "Duplicate audience type"
+                );
+            }
+
+            for (String audienceTypeId : request.getAudienceTypeIds()) {
+
+                AudienceType audienceType = audienceTypeRepository
+                        .findById(audienceTypeId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Audience type not found"
+                                )
+                        );
+
+                if (!audienceType.getActive()) {
+                    throw new ConflictException(
+                            "Audience type is inactive: " + audienceTypeId
+                    );
+                }
+
+                ProjectAudience projectAudience = new ProjectAudience();
+
+                projectAudience.setId(cuidGenerator.generate());
+                projectAudience.setProject(project);
+                projectAudience.setAudienceType(audienceType);
+
+                project.getProjectAudiences()
+                        .add(projectAudience);
+            }
+        }
+
         Project savedProject =
                 projectRepository.save(project);
 
@@ -149,6 +231,52 @@ public class ProjectService {
         projectCategoryRepository.deleteAllByProjectId(id);
 
         projectCategoryRepository.flush();
+
+        projectAudienceRepository.deleteAllByProjectId(id);
+
+        projectAudienceRepository.flush();
+
+        if (request.getAudienceTypeIds() != null) {
+
+            if (request.getAudienceTypeIds().size()
+                    != request.getAudienceTypeIds()
+                    .stream()
+                    .distinct()
+                    .count()) {
+
+                throw new ConflictException(
+                        "Duplicate audience type"
+                );
+            }
+
+            for (String audienceTypeId : request.getAudienceTypeIds()) {
+
+                AudienceType audienceType = audienceTypeRepository
+                        .findById(audienceTypeId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Audience type not found"
+                                )
+                        );
+
+                if (!audienceType.getActive()) {
+                    throw new ConflictException(
+                            "Audience type is inactive"
+                    );
+                }
+
+                ProjectAudience projectAudience =
+                        new ProjectAudience();
+
+                projectAudience.setId(cuidGenerator.generate());
+                projectAudience.setProject(project);
+                projectAudience.setAudienceType(audienceType);
+
+                projectAudienceRepository.save(projectAudience);
+            }
+        }
+
+        projectAudienceRepository.flush();
 
         if (request.getCategoryIds() != null) {
 
@@ -226,6 +354,17 @@ public class ProjectService {
         List<Project> projectsWithCategories =
                 projectRepository.findAllWithCategoriesByIds(projectIds);
 
+        List<ProjectAudience> projectAudiences =
+                projectAudienceRepository
+                        .findAllByProjectIdIn(projectIds);
+
+        Map<String, List<ProjectAudience>> audienceMap =
+                projectAudiences.stream()
+                        .collect(Collectors.groupingBy(
+                                projectAudience ->
+                                        projectAudience.getProject().getId()
+                        ));
+
         Map<String, Project> projectMap =
                 projectsWithCategories.stream()
                         .collect(Collectors.toMap(
@@ -233,9 +372,22 @@ public class ProjectService {
                                 project -> project
                         ));
 
-        return projectPage.map(project ->
-                toResponse(projectMap.get(project.getId()))
-        );
+        return projectPage.map(project -> {
+
+            Project projectWithCategories =
+                    projectMap.get(project.getId());
+
+            List<ProjectAudience> audiences =
+                    audienceMap.getOrDefault(
+                            project.getId(),
+                            List.of()
+                    );
+
+            return toResponse(
+                    projectWithCategories,
+                    audiences
+            );
+        });
     }
 
     @Transactional(readOnly = true)

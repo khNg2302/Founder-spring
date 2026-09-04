@@ -1,5 +1,6 @@
 package founder_spring.project.entity;
 
+import founder_spring.project_audience.entity.ProjectAudience;
 import founder_spring.project_category.entity.ProjectCategory;
 import founder_spring.user.entity.User;
 import jakarta.persistence.*;
@@ -54,6 +55,13 @@ public class Project {
             orphanRemoval = true
     )
     private List<ProjectCategory> projectCategories = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "project",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<ProjectAudience> projectAudiences = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

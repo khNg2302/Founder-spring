@@ -27,5 +27,10 @@ public final class RbacPermission {
     public static final String PERMISSION_CREATE = "permission:create";
     public static final String PERMISSION_UPDATE = "permission:update";
     public static final String PERMISSION_DELETE = "permission:delete";
+
+    public static final String AUDIENCE_TYPE_READ = "audience_type:read";
+    public static final String AUDIENCE_TYPE_CREATE = "audience_type:create";
+    public static final String AUDIENCE_TYPE_UPDATE = "audience_type:update";
+    public static final String AUDIENCE_TYPE_DELETE = "audience_type:delete";
 }
 

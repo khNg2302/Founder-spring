@@ -32,6 +32,8 @@ public class CreateProjectRequest {
     @Size(max = 500, message = "Detail location must not exceed 500 characters")
     private String detailLocation;
 
+    private List<String> audienceTypeIds;
+
     public String getName() {
         return name;
     }
@@ -80,6 +82,14 @@ public class CreateProjectRequest {
         this.categoryIds = categoryIds;
     }
 
+    public List<String> getAudienceTypeIds() {
+        return audienceTypeIds;
+    }
+
+    public void setAudienceTypeIds(List<String> audienceTypeIds) {
+        this.audienceTypeIds = audienceTypeIds;
+    }
+
     public String getDetailLocation() {
         return detailLocation;
     }
@@ -87,4 +97,6 @@ public class CreateProjectRequest {
     public void setDetailLocation(String detailLocation) {
         this.detailLocation = detailLocation;
     }
+
+
 }

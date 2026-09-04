@@ -4,6 +4,7 @@ import founder_spring.category.dto.CategorySummaryResponse;
 import founder_spring.project.entity.ProjectActivityStatus;
 import founder_spring.project.entity.ProjectScope;
 import founder_spring.project.entity.ProjectStage;
+import founder_spring.project_audience.dto.AudienceTypeResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +31,7 @@ public class ProjectResponse {
 
     private List<CategorySummaryResponse> categories;
 
+    private List<AudienceTypeResponse> audienceTypes;
 
     public String getId() {
         return id;
@@ -109,5 +111,13 @@ public class ProjectResponse {
 
     public void setCategories(List<CategorySummaryResponse> categories) {
         this.categories = categories;
+    }
+
+    public List<AudienceTypeResponse> getAudienceTypes() {
+        return audienceTypes;
+    }
+
+    public void setAudienceTypes(List<AudienceTypeResponse> audienceTypes) {
+        this.audienceTypes = audienceTypes;
     }
 }
