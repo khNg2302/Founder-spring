@@ -3,7 +3,6 @@ package founder_spring.project.entity;
 import founder_spring.project_category.entity.ProjectCategory;
 import founder_spring.user.entity.User;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +23,9 @@ public class Project {
 
     @Column(nullable = false, length = 100)
     private String name;
+
+    @Column(length = 1000)
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

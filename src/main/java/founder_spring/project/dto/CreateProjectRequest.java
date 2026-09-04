@@ -15,6 +15,9 @@ public class CreateProjectRequest {
     @Size(max = 100, message = "Project name must not exceed 100 characters")
     private String name;
 
+    @Size(max = 1000, message = "Description must not exceed 1000 characters")
+    private String description;
+
     @NotNull(message = "Project scope is required")
     private ProjectScope scope;
 
@@ -35,6 +38,14 @@ public class CreateProjectRequest {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public ProjectScope getScope() {
@@ -60,7 +71,6 @@ public class CreateProjectRequest {
     public void setActivityStatus(ProjectActivityStatus activityStatus) {
         this.activityStatus = activityStatus;
     }
-
 
     public List<String> getCategoryIds() {
         return categoryIds;

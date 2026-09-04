@@ -4,6 +4,7 @@ import founder_spring.category.dto.CategorySummaryResponse;
 import founder_spring.category.entity.Category;
 import founder_spring.category.exception.CategoryNotFoundException;
 import founder_spring.category.repository.CategoryRepository;
+import founder_spring.common.exception.ResourceNotFoundException;
 import founder_spring.common.util.CuidGenerator;
 import founder_spring.project.dto.CreateProjectRequest;
 import founder_spring.project.dto.ProjectResponse;
@@ -16,8 +17,13 @@ import founder_spring.project.exception.ProjectNotFoundException;
 import founder_spring.project.repository.ProjectRepository;
 import founder_spring.project_category.entity.ProjectCategory;
 import founder_spring.project_category.repository.ProjectCategoryRepository;
+import founder_spring.user.entity.User;
+import founder_spring.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,17 +38,19 @@ public class ProjectService {
     private final CuidGenerator cuidGenerator;
     private final CategoryRepository categoryRepository;
     private final ProjectCategoryRepository projectCategoryRepository;
+    private final UserRepository userRepository;
 
     public ProjectService(
             ProjectRepository projectRepository,
             CuidGenerator cuidGenerator,
             CategoryRepository categoryRepository,
-            ProjectCategoryRepository projectCategoryRepository
+            ProjectCategoryRepository projectCategoryRepository, UserRepository userRepository
     ) {
         this.projectRepository = projectRepository;
         this.cuidGenerator = cuidGenerator;
         this.categoryRepository = categoryRepository;
         this.projectCategoryRepository = projectCategoryRepository;
+        this.userRepository = userRepository;
     }
 
     private ProjectResponse toResponse(Project project) {
@@ -51,6 +59,7 @@ public class ProjectService {
 
         response.setId(project.getId());
         response.setName(project.getName());
+        response.setDescription(project.getDescription());
         response.setScope(project.getScope());
         response.setStage(project.getStage());
         response.setActivityStatus(project.getActivityStatus());
@@ -75,21 +84,16 @@ public class ProjectService {
         return response;
     }
 
-    public Project findById(String id) {
-
-        return projectRepository.findById(id)
-                .orElseThrow(() ->
-                        new ProjectNotFoundException(id)
-                );
-    }
-
     @Transactional
     public ProjectResponse create(CreateProjectRequest request) {
 
         Project project = new Project();
 
         project.setId(cuidGenerator.generate());
+        project.setCreatedBy(getCurrentUser());
+
         project.setName(request.getName());
+        project.setDescription(request.getDescription());
         project.setScope(request.getScope());
         project.setStage(request.getStage());
         project.setActivityStatus(request.getActivityStatus());
@@ -133,13 +137,14 @@ public class ProjectService {
                         new ProjectNotFoundException(id)
                 );
 
+        verifyOwnership(project);
+
         project.setName(request.getName());
+        project.setDescription(request.getDescription());
         project.setScope(request.getScope());
         project.setDetailLocation(request.getDetailLocation());
         project.setStage(request.getStage());
         project.setActivityStatus(request.getActivityStatus());
-
-        projectRepository.save(project);
 
         projectCategoryRepository.deleteAllByProjectId(id);
 
@@ -179,10 +184,13 @@ public class ProjectService {
     @Transactional
     public void delete(String id) {
 
-        Project project = projectRepository.findById(id)
+        Project project = projectRepository
+                .findById(id)
                 .orElseThrow(() ->
                         new ProjectNotFoundException(id)
                 );
+
+        verifyOwnership(project);
 
         projectRepository.delete(project);
     }
@@ -240,5 +248,34 @@ public class ProjectService {
                 );
 
         return toResponse(project);
+    }
+
+    private User getCurrentUser() {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        String userId = authentication.getName();
+
+        return userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found")
+                );
+    }
+
+    private void verifyOwnership(Project project) {
+
+        User currentUser = getCurrentUser();
+
+        if (!project.getCreatedBy()
+                .getId()
+                .equals(currentUser.getId())) {
+
+            throw new AuthorizationDeniedException(
+                    "You do not own this project"
+            );
+        }
     }
 }
